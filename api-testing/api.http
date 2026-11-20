@@ -1,0 +1,86 @@
+### ============================================================
+### Task Management API - REST Client / HTTP Requests
+### ============================================================
+@baseUrl = http://localhost:4000
+@taskId = 1
+
+### ------------------------------------------------------------
+### 1. AUTHENTICATION
+### ------------------------------------------------------------
+
+### 1.1 Register New User
+POST {{baseUrl}}/auth/signup
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "username": "johndoe",
+  "password": "Password@123"
+}
+
+### 1.2 Sign In / Login (Captures Access Token)
+# @name login
+POST {{baseUrl}}/auth/signin
+Content-Type: application/json
+
+{
+  "username": "johndoe",
+  "password": "Password@123"
+}
+
+### Token dynamically extracted from the signin response
+@authToken = {{login.response.body.data.accessToken}}
+
+
+### ------------------------------------------------------------
+### 2. DASHBOARD
+### ------------------------------------------------------------
+
+### 2.1 Get Dashboard Stats
+GET {{baseUrl}}/tasks/dashboard/stats
+Authorization: Bearer {{authToken}}
+
+
+### ------------------------------------------------------------
+### 3. TASKS
+### ------------------------------------------------------------
+
+### 3.1 Create a New Task
+# @name createTask
+POST {{baseUrl}}/tasks
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "Complete Assignment Tasks",
+  "description": "Finish backend setup, documentation, and frontend integration",
+  "priority": "high"
+}
+
+### 3.2 Fetch All Tasks (Paginated, Sorted)
+GET {{baseUrl}}/tasks?page=1&limit=10&sortBy=createdAt&sortOrder=DESC
+Authorization: Bearer {{authToken}}
+
+### 3.3 Fetch Tasks (Filtered by Status and Search)
+GET {{baseUrl}}/tasks?page=1&limit=10&status=pending&priority=high&search=Assignment
+Authorization: Bearer {{authToken}}
+
+### 3.4 Fetch Task by ID
+GET {{baseUrl}}/tasks/{{createTask.response.body.id}}
+Authorization: Bearer {{authToken}}
+
+### 3.5 Update Task
+PATCH {{baseUrl}}/tasks/{{createTask.response.body.id}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "Complete Assignment Tasks (In Progress)",
+  "description": "Reviewing tests and verifying database transactions",
+  "status": "inprogress",
+  "priority": "high"
+}
+
+### 3.6 Soft Delete Task
+DELETE {{baseUrl}}/tasks/{{createTask.response.body.id}}
+Authorization: Bearer {{authToken}}

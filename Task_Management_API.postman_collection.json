@@ -1,0 +1,376 @@
+{
+  "info": {
+    "_postman_id": "c3a331ba-3815-420f-b25c-bca9f509b768",
+    "name": "Task Management API",
+    "description": "Comprehensive Postman Collection for NestJS Task Management API backend with JWT Authentication, Task CRUD, Filtering, Pagination, Soft Deletion, and Dashboard Analytics.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000",
+      "type": "string",
+      "description": "Base URL of the NestJS API server"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string",
+      "description": "JWT Access Token populated automatically after signin"
+    },
+    {
+      "key": "taskId",
+      "value": "1",
+      "type": "string",
+      "description": "Task ID used for fetch by id, update, and delete endpoints"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Authentication",
+      "description": "Endpoints for user registration and authentication",
+      "item": [
+        {
+          "name": "Sign Up / Register",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"username\": \"johndoe\",\n  \"password\": \"Password@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "signup"
+              ]
+            },
+            "description": "Register a new user. Password requires min 8 characters with uppercase, lowercase, number, and special character."
+          },
+          "response": []
+        },
+        {
+          "name": "Sign In / Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 or 200\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.data && jsonData.data.accessToken) {",
+                  "    pm.collectionVariables.set(\"token\", jsonData.data.accessToken);",
+                  "    pm.environment.set(\"token\", jsonData.data.accessToken);",
+                  "    console.log(\"Saved JWT access token to collection and environment variables!\");",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"johndoe\",\n  \"password\": \"Password@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signin",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "signin"
+              ]
+            },
+            "description": "Authenticate user and acquire JWT access token. Automatically stores the token into the 'token' variable on success."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Dashboard",
+      "description": "Analytics and aggregate metrics for the logged-in user",
+      "item": [
+        {
+          "name": "Get Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/dashboard/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks",
+                "dashboard",
+                "stats"
+              ]
+            },
+            "description": "Get real-time task counts broken down by status (pending, inProgress, completed) and priority (high, medium, low)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Tasks",
+      "description": "Task CRUD operations with pagination, sorting, search, and filtering",
+      "item": [
+        {
+          "name": "Create Task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 or 200\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.id) {",
+                  "    pm.collectionVariables.set(\"taskId\", String(jsonData.id));",
+                  "    pm.environment.set(\"taskId\", String(jsonData.id));",
+                  "    console.log(\"Saved created taskId: \" + jsonData.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Complete Assignment Tasks\",\n  \"description\": \"Finish backend setup, documentation, and frontend integration\",\n  \"priority\": \"high\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks"
+              ]
+            },
+            "description": "Create a new task. Priority can be 'low', 'medium', or 'high'. Default status will be 'pending'."
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch All Tasks (Pagination & Filtering)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?page=1&limit=10&sortBy=createdAt&sortOrder=DESC",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (min 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (1-100)"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt",
+                  "description": "Sort field: createdAt | updatedAt | title | priority | status"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "DESC",
+                  "description": "Sort order: ASC | DESC"
+                },
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "disabled": true,
+                  "description": "Filter by status: pending | inprogress | completed"
+                },
+                {
+                  "key": "priority",
+                  "value": "high",
+                  "disabled": true,
+                  "description": "Filter by priority: low | medium | high"
+                },
+                {
+                  "key": "search",
+                  "value": "Assignment",
+                  "disabled": true,
+                  "description": "Search keyword in title or description"
+                }
+              ]
+            },
+            "description": "Fetch tasks with support for pagination, sorting, status/priority filtering, and keyword search."
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch Task By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{taskId}}",
+                  "description": "The task ID"
+                }
+              ]
+            },
+            "description": "Retrieve detailed information for a specific task belonging to the authenticated user."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Task",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Complete Assignment Tasks (In Progress)\",\n  \"description\": \"Reviewing tests and verifying database transactions\",\n  \"status\": \"inprogress\",\n  \"priority\": \"high\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{taskId}}",
+                  "description": "The task ID"
+                }
+              ]
+            },
+            "description": "Partially update title, description, priority, or status ('pending' | 'inprogress' | 'completed')."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Task (Soft Delete)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{taskId}}",
+                  "description": "The task ID"
+                }
+              ]
+            },
+            "description": "Soft deletes a task using softRemove (sets deletedAt timestamp, excluding it from future queries)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Health & Root",
+      "description": "Server health and root verification endpoint",
+      "item": [
+        {
+          "name": "Root Hello World",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                ""
+              ]
+            },
+            "description": "Default NestJS root check endpoint"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
